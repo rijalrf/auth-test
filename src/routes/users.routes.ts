@@ -11,7 +11,6 @@ import type { Request, Response } from 'express';
 export const createUsersRouter = (prisma: PrismaClient): Router => {
   const router = Router();
 
-  // POST /users/register
   router.post('/users/register', async (req: Request, res: Response) => {
     try {
       const parsed = userValidation.registerSchema.safeParse(req.body);
@@ -32,7 +31,6 @@ export const createUsersRouter = (prisma: PrismaClient): Router => {
     }
   });
 
-  // POST /users/login
   router.post('/users/login', async (req: Request, res: Response) => {
     try {
       const parsed = userValidation.loginSchema.safeParse(req.body);
@@ -53,7 +51,6 @@ export const createUsersRouter = (prisma: PrismaClient): Router => {
     }
   });
 
-  // DELETE /users/logout
   router.delete('/users/logout', requireAuth(prisma), userController.logout(prisma));
 
   return router;

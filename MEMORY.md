@@ -104,3 +104,4 @@
 | Password hashing | `src/services/users.service.ts` (bcrypt) | Hardcoded salts, new hash logic |
 | Type safety | `src/types/users.types.ts` (interfaces) | Inline types, `any` type |
 | Database access | Prisma client (auto-generated) | Manual SQL queries |
+| Session queries | `src/repository/users.repository.ts` | Direct `prisma.session.*` calls |
