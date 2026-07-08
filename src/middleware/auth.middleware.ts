@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '../generated/prisma/client.js';
-import * as sessionRepository from '../repository/users.repository.js';
+import * as sessionRepository from '../repository/session.repository.js';
 import { ApiError } from '../utils/errors.js';
 import { sendError } from '../utils/response.js';
 

@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import { PrismaClient } from '../generated/prisma/client.js';
 import { ApiError } from '../utils/errors.js';
-import * as userRepository from '../repository/users.repository.js';
+import * as sessionRepository from '../repository/session.repository.js';
 import type { RegisterInput, RegisterResult, LoginInput, LoginResult, LogoutResult } from '../types/users.types.js';
 
 const SALT_ROUNDS = 12;
@@ -66,7 +66,7 @@ export const loginUser = async (prisma: PrismaClient, input: LoginInput): Promis
   }
 
   const expiresAt = new Date(Date.now() + SESSION_EXPIRY_HOURS * 3_600_000);
-  const session = await userRepository.createUserSession(prisma, user.id, expiresAt);
+  const session = await sessionRepository.createUserSession(prisma, user.id, expiresAt);
 
   return { id: user.id, email: user.email, name: user.name, token: session.token };
 };
@@ -75,6 +75,6 @@ export const loginUser = async (prisma: PrismaClient, input: LoginInput): Promis
  * Invalidate all sessions for a user (logout). Idempotent — always returns ok.
  */
 export const logoutUser = async (prisma: PrismaClient, userId: string): Promise<LogoutResult> => {
-  await userRepository.deleteUserSession(prisma, userId);
+  await sessionRepository.deleteUserSession(prisma, userId);
   return { data: 'ok' };
 };
