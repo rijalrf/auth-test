@@ -29,5 +29,26 @@ export const createUsersRouter = (prisma: PrismaClient): Router => {
     }
   });
 
+  router.post('/users/login', async (req: Request, res: Response) => {
+    try {
+      const parsed = userValidation.loginSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const messages = parsed.error.issues.map(i => i.message).join(', ');
+        sendError(res, messages, 'INVALID_INPUT');
+        return;
+      }
+
+      const result = await userService.loginUser(prisma, parsed.data);
+      sendSuccess(res, 'Login successful', result, 200);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        sendError(res, err.message, err.code, err.status);
+        return;
+      }
+      console.error('[LOGIN_ERROR]', err);
+      sendError(res, 'Internal server error', 'DB_ERROR', 500);
+    }
+  });
+
   return router;
 };
