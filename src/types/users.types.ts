@@ -22,3 +22,16 @@ export interface LoginResult {
   name: string | null;
   token: string;
 }
+
+export interface LogoutResult {
+  data: 'ok';
+}
+
+// Express augmentation for auth middleware
+declare global {
+  namespace Express {
+    interface Request {
+      userId?: string;
+    }
+  }
+}

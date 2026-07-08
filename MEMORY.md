@@ -1,164 +1,107 @@
-# Auth Project — Persistent Project Memory
+# Auth Project - Technical Lead Notes
 
-
-**Stack**: Express.js + TypeScript + Prisma 7 + PostgreSQL  
-**Repo**: `git@github.com:rijalrf/auth-test.git`
-
----
-
-## Project Structure
-
-```
-src/
-├── utils/
-│   ├── errors.ts          ← ApiError class
-│   └── response.ts        ← sendSuccess / sendError
-├── schema/
-│   └── users.validation.ts ← Zod schemas (registerSchema, loginSchema)
-├── types/
-│   └── users.types.ts     ← Interfaces (RegisterInput/Result, LoginInput/Result)
-├── services/
-│   └── users.service.ts   ← Business logic (registerUser, loginUser)
-├── routes/
-│   └── users.routes.ts    ← HTTP handlers (POST /api/users/register, /login)
-└── generated/
-    └── prisma/            ← Auto-generated Prisma client (DO NOT edit)
-prisma/
-├── schema.prisma          ← Models: User, Session
-└── migrations/            ← Auto-generated
-```
+**Project**: Authentication Service  
+**Stack**: Express.js + TypeScript + Prisma + PostgreSQL  
+**Repo**: git@github.com:rijalrf/auth-test.git
 
 ---
 
-## Reusable Patterns & Imports
-
-### ApiError — semantic error
-```ts
-import { ApiError } from '../utils/errors.js';
-
-throw new ApiError('message', 'ERROR_CODE', 400);
-// Args: message (string), code (string), status (number, default 500)
-```
-
-### Response helpers — standardized JSON shape
-```ts
-import { sendSuccess, sendError } from '../utils/response.js';
-
-sendSuccess(res, 'Success message', data, 200);   // → { success, message, data }
-sendError(res, 'Error msg', 'ERROR_CODE', 400);   // → { success:false, message[, code] }
-```
-
-### Zod validation — safeParse before service call
-```ts
-import * as userValidation from '../schema/users.validation.js';
-
-const parsed = userValidation.loginSchema.safeParse(req.body);
-if (!parsed.success) { /* parsed.error.issues */ }
-// Then pass parsed.data to service — fully typed
-```
-
-### Service pattern — prisma DI, throw ApiError
-```ts
-import { PrismaClient } from '../generated/prisma/client.js';
-
-export const fn = async (prisma: PrismaClient, input: InputType): Promise<ResultType> => {
-  // business logic, throw ApiError on failure
-};
-```
-
-### Route pattern — validation → service → response
-```ts
-router.post('/path', async (req, res) => {
-  try {
-    const parsed = schema.safeParse(req.body);
-    if (!parsed.success) { sendError(res, /*...*/); return; }
-    const result = await service(prisma, parsed.data);
-    sendSuccess(res, 'msg', result, 200);
-  } catch (err) {
-    if (err instanceof ApiError) { sendError(res, err.message, err.code, err.status); return; }
-    sendError(res, 'Internal server error', 'DB_ERROR', 500);
-  }
-});
-```
-
-### Prisma client — singleton via index.ts
-```ts
-import { PrismaClient } from '../generated/prisma/client.js';
-const prisma = new PrismaClient({ adapter });
-// Injected into createApp(prisma) → forwarded to createUsersRouter(prisma)
-```
+## TL Discipline & Workflow
+- ✅ **Responsibility 1 — Planning**: Buat spec, dokumentasi, GitHub issues, architecture
+- ✅ **Responsibility 2 — Code Review**: Review PR dari Dev dengan checklist ketat
+- ❌ **Forbidden**: Implementasi code, schema changes, migrations, dependency installs
+- 👉 **Action**: Delegate semua implementasi ke `@agenthermes_dev_bot` atau junior dev
 
 ---
 
-## Database Schema
+## Code Review Checklist (KETAT)
 
-### User
-| Column | Type | Notes |
-|--------|------|-------|
-| id | UUID | PK, auto |
-| email | String | unique |
-| name | String? | |
-| passwordHash | String | bcrypt, SALT_ROUNDS=12 |
-| createdAt | DateTime | auto |
-| updatedAt | DateTime | auto |
+### 1. Performance
+- [ ] No unnecessary database queries (N+1 problem?)
+- [ ] Efficient Prisma relations (select fields, avoid overfetch)
+- [ ] No synchronous blocking operations (async/await pattern)
+- [ ] Proper indexing hints in schema (if needed)
+- [ ] Memory usage — no large object accumulation in loops
 
-### Session (stateful token)
-| Column | Type | Notes |
-|--------|------|-------|
-| id | UUID | PK, auto |
-| userId | UUID | FK → users.id, CASCADE delete |
-| token | UUID | unique, auto-generated — this is the auth token |
-| createdAt | DateTime | auto |
-| expiresAt | DateTime | now + SESSION_EXPIRY_HOURS |
+### 2. DRY (Don't Repeat Yourself) — STRICT
+- [ ] No duplicate error handling code — use `ApiError` from utils
+- [ ] No duplicate response formatting — use `sendSuccess/sendError` helpers
+- [ ] No duplicate validation logic — use Zod schemas from schema folder
+- [ ] No duplicate password hashing — reuse bcrypt from service layer
+- [ ] No duplicate type definitions — all interfaces in `types/` folder
+- [ ] No duplicate business logic — extract to service layer
+- [ ] Constants reused, not hardcoded (SALT_ROUNDS, error messages, expiry hours)
 
-```prisma
-model Session {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  token     String   @unique @default(uuid())
-  createdAt DateTime @default(now()) @map("created_at")
-  expiresAt DateTime @map("expires_at")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  @@map("sessions")
-}
-```
+### 3. YAGNI (You Aren't Gonna Need It)
+- [ ] No speculative features (refresh tokens, permissions, etc. — add when needed)
+- [ ] No "just in case" abstractions
+- [ ] No unused imports or dead code
+- [ ] No placeholder for future features without a ticket
+
+### 4. Best Practice
+- [ ] Prisma transactions for multi-step operations
+- [ ] Proper error boundaries (catch specific errors, not generic)
+- [ ] Input validation before processing (Zod safeParse)
+- [ ] No raw SQL (use Prisma only)
+- [ ] Proper async/await usage (no unhandled promises)
+- [ ] Environment variables for config (no hardcoded secrets)
+
+### 5. Naming Convention
+- [ ] camelCase for variables, functions, properties
+- [ ] PascalCase for classes, interfaces, types
+- [ ] SCREAMING_SNAKE_CASE for constants
+- [ ] Descriptive names (no `x`, `temp`, `data1`, `a`)
+- [ ] Function names start with verb (create, get, validate, throw)
+- [ ] Boolean variables start with `is`, `has`, `should`, `can`
+- [ ] Avoid abbreviations except standard ones (req, res, err, db)
+
+### 6. Flow & Folder Structure
+- [ ] Code organized by responsibility (utils, schema, types, services, routes)
+- [ ] No circular dependencies
+- [ ] Related files grouped in same folder
+- [ ] Clear file naming reflecting content (users.routes.ts, users.service.ts, etc.)
+- [ ] Services isolated from routes (clean separation)
+- [ ] Validation layer before service call
+- [ ] Error handling at route level, business logic in service level
+
+### 7. Clean Code (KETAT)
+- [ ] No commented-out code
+- [ ] No debug console.log left behind
+- [ ] Single responsibility per function
+- [ ] Functions under 20 lines (if longer, extract helpers)
+- [ ] No nested ternaries or complex conditionals
+- [ ] Early returns to reduce nesting
+- [ ] Clear variable scope (const > let > var)
+- [ ] No side effects in pure functions
+
+### 8. Code Readability
+- [ ] Self-documenting code (no vague variable names)
+- [ ] Comments only for WHY, not WHAT
+- [ ] JSDoc for exported functions (params, returns, throws)
+- [ ] Consistent formatting and indentation
+- [ ] Line length reasonable (max 100-120 chars)
+- [ ] No magic numbers — use named constants
+- [ ] Logical grouping of related statements
+- [ ] Test code is as readable as production code
 
 ---
 
-## API Contract
-
-### POST /api/users/register
-```
-Input:  { email: string, password: string(min 8), name: string }
-Output: { success: true, message, data: { id, email, name, created_at } }
-Errors: 400 INVALID_INPUT, 409 USER_EMAIL_EXISTS
-```
-
-### POST /api/users/login
-```
-Input:  { email: string, password: string }
-Output: { success: true, message, data: { id, email, name, token: uuid } }
-Errors: 400 INVALID_INPUT, 401 INVALID_CREDENTIALS
-```
+## TypeScript Strict Rules
+- ✅ `strict: true` in tsconfig
+- ❌ NO `any` type — always use proper interfaces/types
+- ✅ All function parameters typed
+- ✅ All return types explicitly declared
+- ✅ No implicit `any`
 
 ---
 
-## Environment Variables
-
-| Var | Default | Purpose |
-|-----|---------|---------|
-| `DATABASE_URL` | — | PostgreSQL connection string |
-| `PORT` | 3000 | HTTP listen port |
-| `SESSION_EXPIRY_HOURS` | 24 | Token lifetime in hours |
-
----
-
-## Conventions
-
-- **Strict TypeScript**: NO `any`. All interfaces in `types/users.types.ts`.
-- **DRY**: ApiError, sendSuccess/sendError, Zod schemas, bcrypt — reuse, don't duplicate.
-- **YAGNI**: No refresh token, no role/permission until needed.
-- **Stateful sessions**: UUID token stored in DB → can be revoked/expired server-side.
-- **Error codes**: `INVALID_INPUT`=400, `INVALID_CREDENTIALS`=401, `USER_EMAIL_EXISTS`=409, `DB_ERROR`=500.
-- **Prisma migrations**: `npx prisma migrate dev --name <name>` then `npx prisma generate`.
-
+## Established Patterns (Reuse, Don't Duplicate)
+| Pattern | Location | DO NOT Duplicate |
+|---------|----------|------------------|
+| Error handling | `src/utils/errors.ts` (ApiError class) | Create new error classes |
+| HTTP responses | `src/utils/response.ts` (sendSuccess/sendError) | Inline response formatting |
+| Validation | `src/schema/users.validation.ts` (Zod) | Scattered validators |
+| Password hashing | `src/services/users.service.ts` (bcrypt) | Hardcoded salts, new hash logic |
+| Type safety | `src/types/users.types.ts` (interfaces) | Inline types, `any` type |
+| Database access | Prisma client (auto-generated) | Manual SQL queries |
+| Session queries | `src/repository/session.repository.ts` | Direct `prisma.session.*` calls |

@@ -1,7 +1,8 @@
 import bcrypt from 'bcrypt';
 import { PrismaClient } from '../generated/prisma/client.js';
 import { ApiError } from '../utils/errors.js';
-import type { RegisterInput, RegisterResult, LoginInput, LoginResult } from '../types/users.types.js';
+import * as sessionRepository from '../repository/session.repository.js';
+import type { RegisterInput, RegisterResult, LoginInput, LoginResult, LogoutResult } from '../types/users.types.js';
 
 const SALT_ROUNDS = 12;
 const ERROR = {
@@ -9,6 +10,10 @@ const ERROR = {
   PASSWORD_HASH_FAILED: 'Failed to encrypt password',
 } as const;
 
+/**
+ * Register a new user with email, password, and optional name.
+ * Throws 409 if email already exists.
+ */
 export const registerUser = async (prisma: PrismaClient, input: RegisterInput): Promise<RegisterResult> => {
   const existing = await prisma.user.findUnique({ where: { email: input.email } });
   if (existing) {
@@ -45,6 +50,10 @@ const SESSION_EXPIRY_HOURS = (() => {
   return isNaN(n) || n < 1 ? 24 : n;
 })();
 
+/**
+ * Authenticate user with email + password, returns user data + session token.
+ * Throws 401 on invalid credentials.
+ */
 export const loginUser = async (prisma: PrismaClient, input: LoginInput): Promise<LoginResult> => {
   const user = await prisma.user.findUnique({ where: { email: input.email } });
   if (!user) {
@@ -57,9 +66,15 @@ export const loginUser = async (prisma: PrismaClient, input: LoginInput): Promis
   }
 
   const expiresAt = new Date(Date.now() + SESSION_EXPIRY_HOURS * 3_600_000);
-  const session = await prisma.session.create({
-    data: { userId: user.id, expiresAt },
-  });
+  const session = await sessionRepository.createUserSession(prisma, user.id, expiresAt);
 
   return { id: user.id, email: user.email, name: user.name, token: session.token };
+};
+
+/**
+ * Invalidate all sessions for a user (logout). Idempotent — always returns ok.
+ */
+export const logoutUser = async (prisma: PrismaClient, userId: string): Promise<LogoutResult> => {
+  await sessionRepository.deleteUserSession(prisma, userId);
+  return { data: 'ok' };
 };

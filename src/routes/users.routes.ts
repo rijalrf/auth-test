@@ -1,9 +1,12 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 import { PrismaClient } from '../generated/prisma/client.js';
-import * as userService from '../services/users.service.js';
+import { requireAuth } from '../middleware/auth.middleware.js';
+import * as userController from '../controllers/users.controller.js';
 import * as userValidation from '../schema/users.validation.js';
+import * as userService from '../services/users.service.js';
 import { sendSuccess, sendError } from '../utils/response.js';
 import { ApiError } from '../utils/errors.js';
+import type { Request, Response } from 'express';
 
 export const createUsersRouter = (prisma: PrismaClient): Router => {
   const router = Router();
@@ -16,7 +19,6 @@ export const createUsersRouter = (prisma: PrismaClient): Router => {
         sendError(res, messages, 'INVALID_INPUT');
         return;
       }
-
       const result = await userService.registerUser(prisma, parsed.data);
       sendSuccess(res, 'User registered successfully', result, 201);
     } catch (err) {
@@ -37,7 +39,6 @@ export const createUsersRouter = (prisma: PrismaClient): Router => {
         sendError(res, messages, 'INVALID_INPUT');
         return;
       }
-
       const result = await userService.loginUser(prisma, parsed.data);
       sendSuccess(res, 'Login successful', result, 200);
     } catch (err) {
@@ -49,6 +50,8 @@ export const createUsersRouter = (prisma: PrismaClient): Router => {
       sendError(res, 'Internal server error', 'DB_ERROR', 500);
     }
   });
+
+  router.delete('/users/logout', requireAuth(prisma), userController.logout(prisma));
 
   return router;
 };
