@@ -1,23 +1,37 @@
 import dotenv from 'dotenv';
-import express from 'express';
-import cors from 'cors';
+import { PrismaClient } from './generated/prisma/client.js';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { createApp } from './app.js';
 
 dotenv.config();
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
+const prisma = new PrismaClient({ adapter });
+const app = createApp();
+const PORT = parseInt(process.env.PORT || '3000', 10);
 
-app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    message: 'Server is running',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+async function main() {
+  await prisma.$connect();
+  console.log('✅ Database connected');
+
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
   });
+}
+
+main().catch((err) => {
+  console.error('❌ Failed to start server:', err.message);
+  process.exit(1);
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+process.on('SIGTERM', async () => {
+  console.log('🛑 SIGTERM — shutting down gracefully');
+  await prisma.$disconnect();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  console.log('🛑 SIGINT — shutting down gracefully');
+  await prisma.$disconnect();
+  process.exit(0);
 });
