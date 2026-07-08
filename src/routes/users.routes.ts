@@ -11,6 +11,8 @@ import type { Request, Response } from 'express';
 export const createUsersRouter = (prisma: PrismaClient): Router => {
   const router = Router();
 
+  router.get('/users/me', requireAuth(prisma), userController.getMe(prisma));
+
   router.post('/users/register', async (req: Request, res: Response) => {
     try {
       const parsed = userValidation.registerSchema.safeParse(req.body);

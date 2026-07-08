@@ -2,7 +2,8 @@ import bcrypt from 'bcrypt';
 import { PrismaClient } from '../generated/prisma/client.js';
 import { ApiError } from '../utils/errors.js';
 import * as sessionRepository from '../repository/session.repository.js';
-import type { RegisterInput, RegisterResult, LoginInput, LoginResult, LogoutResult } from '../types/users.types.js';
+import * as usersRepository from '../repository/users.repository.js';
+import type { RegisterInput, RegisterResult, LoginInput, LoginResult, LogoutResult, UserProfile } from '../types/users.types.js';
 
 const SALT_ROUNDS = 12;
 const ERROR = {
@@ -69,6 +70,17 @@ export const loginUser = async (prisma: PrismaClient, input: LoginInput): Promis
   const session = await sessionRepository.createUserSession(prisma, user.id, expiresAt);
 
   return { id: user.id, email: user.email, name: user.name, token: session.token };
+};
+
+/**
+ * Get current authenticated user's profile.
+ */
+export const getCurrentUserInfo = async (prisma: PrismaClient, userId: string): Promise<UserProfile> => {
+  const user = await usersRepository.getUserById(prisma, userId);
+  if (!user) {
+    throw new ApiError('User not found', 'USER_NOT_FOUND', 404);
+  }
+  return user;
 };
 
 /**

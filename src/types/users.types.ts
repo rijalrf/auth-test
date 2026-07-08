@@ -27,6 +27,12 @@ export interface LogoutResult {
   data: 'ok';
 }
 
+export interface UserProfile {
+  id: string;
+  email: string;
+  name: string | null;
+}
+
 // Express augmentation for auth middleware
 declare global {
   namespace Express {
