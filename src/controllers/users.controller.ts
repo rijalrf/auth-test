@@ -7,7 +7,12 @@ import { ApiError } from '../utils/errors.js';
 export const logout = (prisma: PrismaClient) => {
   return async (req: Request, res: Response): Promise<void> => {
     try {
-      const result = await userService.logoutUser(prisma, req.userId!);
+      const userId = req.userId;
+      if (!userId) {
+        sendError(res, 'Unauthorized', 'UNAUTHORIZED', 401);
+        return;
+      }
+      const result = await userService.logoutUser(prisma, userId);
       sendSuccess(res, 'Logout successful', result, 200);
     } catch (err) {
       if (err instanceof ApiError) {

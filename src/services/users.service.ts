@@ -66,6 +66,9 @@ export const loginUser = async (prisma: PrismaClient, input: LoginInput): Promis
 };
 
 export const logoutUser = async (prisma: PrismaClient, userId: string): Promise<LogoutResult> => {
+  // Idempotent by design: if session already deleted (already logged out),
+  // we still return success — client doesn't need to know DB state.
+  // The auth middleware already validated the token before reaching here.
   await userRepository.deleteUserSession(prisma, userId);
   return { data: 'ok' };
 };
