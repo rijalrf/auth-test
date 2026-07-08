@@ -7,7 +7,7 @@ dotenv.config();
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
-const app = createApp();
+const app = createApp(prisma);
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
 async function main() {

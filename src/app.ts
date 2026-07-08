@@ -1,7 +1,9 @@
 import express from 'express';
 import cors from 'cors';
+import { PrismaClient } from './generated/prisma/client.js';
+import { createUsersRouter } from './routes/users.routes.js';
 
-export const createApp = () => {
+export const createApp = (prisma: PrismaClient) => {
   const app = express();
 
   app.use(cors());
@@ -16,6 +18,9 @@ export const createApp = () => {
       environment: process.env.NODE_ENV || 'development',
     });
   });
+
+  // Routes
+  app.use('/api', createUsersRouter(prisma));
 
   // 404 handler
   app.use((req, res) => {
