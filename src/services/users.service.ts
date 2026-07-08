@@ -1,7 +1,8 @@
 import bcrypt from 'bcrypt';
 import { PrismaClient } from '../generated/prisma/client.js';
 import { ApiError } from '../utils/errors.js';
-import type { RegisterInput, RegisterResult, LoginInput, LoginResult } from '../types/users.types.js';
+import * as userRepository from '../repository/users.repository.js';
+import type { RegisterInput, RegisterResult, LoginInput, LoginResult, LogoutResult } from '../types/users.types.js';
 
 const SALT_ROUNDS = 12;
 const ERROR = {
@@ -62,4 +63,9 @@ export const loginUser = async (prisma: PrismaClient, input: LoginInput): Promis
   });
 
   return { id: user.id, email: user.email, name: user.name, token: session.token };
+};
+
+export const logoutUser = async (prisma: PrismaClient, userId: string): Promise<LogoutResult> => {
+  await userRepository.deleteUserSession(prisma, userId);
+  return { data: 'ok' };
 };
