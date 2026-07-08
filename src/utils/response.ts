@@ -4,6 +4,7 @@ export interface ApiResponse<T = unknown> {
   success: boolean;
   message: string;
   data?: T;
+  code?: string;
 }
 
 export function sendSuccess<T>(res: Response, message: string, data: T, status = 200): void {
@@ -11,8 +12,8 @@ export function sendSuccess<T>(res: Response, message: string, data: T, status =
   res.status(status).json(body);
 }
 
-export function sendError(res: Response, message: string, status = 400, code?: string): void {
-  const body: ApiResponse & { code?: string } = { success: false, message };
+export function sendError(res: Response, message: string, code?: string, status = 400): void {
+  const body: ApiResponse = { success: false, message };
   if (code) body.code = code;
   res.status(status).json(body);
 }
