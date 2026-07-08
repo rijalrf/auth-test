@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { PrismaClient } from './generated/prisma/client.js';
+import { createHealthRouter } from './routes/health.routes.js';
 import { createUsersRouter } from './routes/users.routes.js';
 
 export const createApp = (prisma: PrismaClient) => {
@@ -9,17 +10,8 @@ export const createApp = (prisma: PrismaClient) => {
   app.use(cors());
   app.use(express.json());
 
-  // Health check
-  app.get('/api/health', (req, res) => {
-    res.status(200).json({
-      status: 'ok',
-      message: 'Server is running',
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || 'development',
-    });
-  });
-
   // Routes
+  app.use('/api', createHealthRouter());
   app.use('/api', createUsersRouter(prisma));
 
   // 404 handler
