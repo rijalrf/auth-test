@@ -33,6 +33,26 @@ export interface UserProfile {
   name: string | null;
 }
 
+export interface UserWithPassword {
+  id: string;
+  email: string;
+  name: string | null;
+  passwordHash: string;
+}
+
+export interface CreateUserInput {
+  email: string;
+  name: string;
+  passwordHash: string;
+}
+
+export interface CreatedUser {
+  id: string;
+  email: string;
+  name: string | null;
+  createdAt: Date;
+}
+
 // Express augmentation for auth middleware
 declare global {
   namespace Express {
