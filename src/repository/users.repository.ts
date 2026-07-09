@@ -1,5 +1,5 @@
 import { PrismaClient } from "../generated/prisma/client.js";
-import type { UserProfile } from "../types/users.types.js";
+import type { UserProfile, UserWithPassword, CreateUserInput, CreatedUser } from "../types/users.types.js";
 
 export const getUserById = async (
   prisma: PrismaClient,
@@ -15,29 +15,15 @@ export const getUserById = async (
 export const findUserByEmail = async (
   prisma: PrismaClient,
   email: string,
-): Promise<{
-  id: string;
-  email: string;
-  name: string | null;
-  passwordHash: string;
-} | null> => {
+): Promise<UserWithPassword | null> => {
   const user = await prisma.user.findUnique({ where: { email } });
   return user;
 };
 
 export const createUser = async (
   prisma: PrismaClient,
-  data: {
-    email: string;
-    name: string;
-    passwordHash: string;
-  },
-): Promise<{
-  id: string;
-  email: string;
-  name: string | null;
-  createdAt: Date;
-}> => {
+  data: CreateUserInput,
+): Promise<CreatedUser> => {
   const user = await prisma.user.create({ data });
   return user;
 };
