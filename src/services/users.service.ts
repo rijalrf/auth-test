@@ -16,7 +16,7 @@ const ERROR = {
  * Throws 409 if email already exists.
  */
 export const registerUser = async (prisma: PrismaClient, input: RegisterInput): Promise<RegisterResult> => {
-  const existing = await usersRepository.findUserByEmail(prisma, input.email);
+  const existing = await prisma.user.findUnique({ where: { email: input.email } });
   if (existing) {
     throw new ApiError(ERROR.EMAIL_EXISTS, 'USER_EMAIL_EXISTS', 409);
   }
@@ -28,10 +28,12 @@ export const registerUser = async (prisma: PrismaClient, input: RegisterInput): 
     throw new ApiError(ERROR.PASSWORD_HASH_FAILED, 'PASSWORD_HASH_ERROR', 500);
   }
 
-  const user = await usersRepository.createUser(prisma, {
-    email: input.email,
-    name: input.name,
-    passwordHash,
+  const user = await prisma.user.create({
+    data: {
+      email: input.email,
+      name: input.name,
+      passwordHash,
+    },
   });
 
   return {
@@ -54,7 +56,7 @@ const SESSION_EXPIRY_HOURS = (() => {
  * Throws 401 on invalid credentials.
  */
 export const loginUser = async (prisma: PrismaClient, input: LoginInput): Promise<LoginResult> => {
-  const user = await usersRepository.findUserByEmail(prisma, input.email);
+  const user = await prisma.user.findUnique({ where: { email: input.email } });
   if (!user) {
     throw new ApiError('Invalid credentials', 'INVALID_CREDENTIALS', 401);
   }
