@@ -1,4 +1,4 @@
-export interface TodoResponse {
+export interface TTodoResponse {
   id: string;
   title: string;
   description: string | null;
@@ -9,14 +9,14 @@ export interface TodoResponse {
   updatedAt: Date;
 }
 
-export interface CreateTodoInput {
+export interface TCreateTodoInput {
   title: string;
   description?: string;
   deadline?: string;
   color?: string;
 }
 
-export interface UpdateTodoInput {
+export interface TUpdateTodoInput {
   title?: string;
   description?: string;
   deadline?: string;
@@ -24,7 +24,7 @@ export interface UpdateTodoInput {
   color?: string;
 }
 
-export interface PaginationMeta {
+export interface TPaginationMeta {
   total: number;
   page: number;
   limit: number;

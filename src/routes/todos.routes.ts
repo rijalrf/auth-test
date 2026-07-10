@@ -6,11 +6,11 @@ import * as todoController from '../controllers/todos.controller.js';
 export const createTodosRouter = (prisma: PrismaClient): Router => {
   const router = Router();
 
-  router.get('/todos', requireAuth(prisma), todoController.list(prisma));
-  router.post('/todos', requireAuth(prisma), todoController.create(prisma));
-  router.get('/todos/:id', requireAuth(prisma), todoController.getById(prisma));
-  router.put('/todos/:id', requireAuth(prisma), todoController.update(prisma));
-  router.delete('/todos/:id', requireAuth(prisma), todoController.remove(prisma));
+  router.get('/todos', requireAuth(prisma), todoController.todosList(prisma));
+  router.post('/todos', requireAuth(prisma), todoController.todosCreate(prisma));
+  router.get('/todos/:id', requireAuth(prisma), todoController.todosGetById(prisma));
+  router.patch('/todos/:id', requireAuth(prisma), todoController.todosUpdate(prisma));
+  router.delete('/todos/:id', requireAuth(prisma), todoController.todosRemove(prisma));
 
   return router;
 };

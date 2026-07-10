@@ -1,17 +1,17 @@
 import { PrismaClient } from '../generated/prisma/client.js';
 import { ApiError } from '../utils/errors.js';
-import * as todoRepository from '../repository/todos.repository.js';
-import type { CreateTodoInput, UpdateTodoInput, TodoResponse, PaginationMeta } from '../types/todos.types.js';
+import * as todoRepo from '../repository/todos.repository.js';
+import type { TCreateTodoInput, TUpdateTodoInput, TTodoResponse, TPaginationMeta } from '../types/todos.types.js';
 
-export const getTodos = async (
+export const todosGetMany = async (
   prisma: PrismaClient,
   userId: string,
   page: number,
   limit: number,
-): Promise<{ data: TodoResponse[]; meta: PaginationMeta }> => {
+): Promise<{ data: TTodoResponse[]; meta: TPaginationMeta }> => {
   const skip = (page - 1) * limit;
-  const total = await todoRepository.countUserTodos(prisma, userId);
-  const data = await todoRepository.findTodosByUser(prisma, userId, skip, limit);
+  const total = await todoRepo.todosCount(prisma, userId);
+  const data = await todoRepo.todosFindMany(prisma, userId, skip, limit);
 
   return {
     data,
@@ -24,44 +24,43 @@ export const getTodos = async (
   };
 };
 
-export const getTodoById = async (
+export const todosGetById = async (
   prisma: PrismaClient,
   id: string,
   userId: string,
-): Promise<TodoResponse> => {
-  const todo = await todoRepository.findTodoById(prisma, id, userId);
+): Promise<TTodoResponse> => {
+  const todo = await todoRepo.todosFindById(prisma, id, userId);
   if (!todo) {
     throw new ApiError('Todo not found', 'TODO_NOT_FOUND', 404);
   }
   return todo;
 };
 
-export const createTodo = async (
+export const todosCreate = async (
   prisma: PrismaClient,
   userId: string,
-  input: CreateTodoInput,
-): Promise<TodoResponse> => {
-  return todoRepository.createTodo(prisma, userId, input);
+  input: TCreateTodoInput,
+): Promise<TTodoResponse> => {
+  return todoRepo.todosCreate(prisma, userId, input);
 };
 
-export const updateTodo = async (
+export const todosUpdate = async (
   prisma: PrismaClient,
   id: string,
   userId: string,
-  input: UpdateTodoInput,
-): Promise<TodoResponse> => {
-  // Verify ownership
-  const existing = await todoRepository.findTodoById(prisma, id, userId);
+  input: TUpdateTodoInput,
+): Promise<TTodoResponse> => {
+  const existing = await todoRepo.todosFindById(prisma, id, userId);
   if (!existing) {
     throw new ApiError('Todo not found', 'TODO_NOT_FOUND', 404);
   }
-  return todoRepository.updateTodo(prisma, id, userId, input);
+  return todoRepo.todosUpdate(prisma, id, input);
 };
 
-export const deleteTodo = async (
+export const todosDelete = async (
   prisma: PrismaClient,
   id: string,
   userId: string,
 ): Promise<void> => {
-  return todoRepository.deleteTodoById(prisma, id, userId);
+  return todoRepo.todosDelete(prisma, id, userId);
 };
