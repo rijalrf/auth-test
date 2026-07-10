@@ -20,6 +20,7 @@ model User {
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
   sessions     Session[]
+  todos        Todo[]
 
   @@map("users")
 }
@@ -34,4 +35,20 @@ model Session {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
+}
+
+model Todo {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  deadline    DateTime?
+  completed   Boolean  @default(false)
+  color       String?
+  userId      String   @map("user_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("todos")
 }
