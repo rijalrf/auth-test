@@ -3,6 +3,7 @@ import cors from 'cors';
 import { PrismaClient } from './generated/prisma/client.js';
 import { createHealthRouter } from './routes/health.routes.js';
 import { createUsersRouter } from './routes/users.routes.js';
+import { createTodosRouter } from './routes/todos.routes.js';
 
 export const createApp = (prisma: PrismaClient) => {
   const app = express();
@@ -13,6 +14,7 @@ export const createApp = (prisma: PrismaClient) => {
   // Routes
   app.use('/api', createHealthRouter());
   app.use('/api', createUsersRouter(prisma));
+  app.use('/api', createTodosRouter(prisma));
 
   // 404 handler
   app.use((req, res) => {
